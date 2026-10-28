@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hidden Details - Hong Kong Heritage Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage: #6B8F71;
+            --sage-light: #A8C9AD;
+            --sage-pale: #D4E8D7;
+            --sage-dark: #4A6B50;
+            --cream: #F4F7F4;
+            --white: #FFFFFF;
+            --charcoal: #2C3E2D;
+            --gray: #5E7260;
+            --gray-light: #D5DDD6;
+            --gray-pale: #E8EDE9;
+            --accent: #8FB996;
+            --error: #D4736B;
+            --error-light: #F5D5D2;
+            --gold: #C4A35A;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Screens ── */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(32px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(107, 143, 113, 0.35); }
+            50% { box-shadow: 0 0 0 18px rgba(107, 143, 113, 0); }
+        }
+        @keyframes ringFade {
+            0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.7; }
+            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .shake { animation: shake 0.4s ease; }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-block; padding: 14px 44px;
+            border-radius: 50px; font-size: 1rem;
+            font-weight: 500; cursor: pointer; border: none;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-decoration: none; letter-spacing: 0.3px;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background: var(--sage); color: white;
+            box-shadow: 0 3px 16px rgba(107, 143, 113, 0.3);
+        }
+        .btn-primary:hover {
+            background: var(--sage-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(107, 143, 113, 0.4);
+        }
+        .btn-ghost {
+            background: transparent; color: var(--sage);
+            border: 1.5px solid var(--sage-pale);
+            padding: 12px 32px; font-size: 0.9rem;
+        }
+        .btn-ghost:hover {
+            background: var(--sage); color: white;
+            border-color: var(--sage);
+        }
+
+        /* ── Title Screen ── */
+        .title-screen {
+            flex: 1;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center; padding: 3rem 2rem;
+            background: linear-gradient(160deg, var(--cream) 0%, #E8F0E9 50%, #DCE8DD 100%);
+            position: relative;
+            width: 100%;
+        }
+        .title-screen::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236B8F71' fill-opacity='0.03'%3E%3Ccircle cx='40' cy='40' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .title-content {
+            position: relative; z-index: 1;
+            max-width: 580px; width: 100%;
+            margin: 0 auto;
+            animation: slideUp 0.7s ease;
+        }
+        .title-content h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.4rem; font-weight: 700;
+            color: var(--sage-dark);
+            margin-bottom: 0.4rem; line-height: 1.05;
+            letter-spacing: -0.5px;
+        }
+        .title-content .subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem; color: var(--sage);
+            font-weight: 400; margin-bottom: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+        .title-content .desc {
+            color: var(--gray);
+            font-size: 1rem; line-height: 1.75;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+        .location-dots {
+            display: flex; gap: 14px;
+            justify-content: center; margin: 3.5rem auto 0;
+            flex-wrap: wrap; max-width: 320px;
+        }
+        .loc-dot {
+            width: 56px; height: 56px; border-radius: 50%;
+            overflow: hidden; border: 3px solid white;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.08);
+            opacity: 0.65; transition: all 0.35s ease;
+        }
+        .loc-dot img { width: 100%; height: 100%; object-fit: cover; }
+        .loc-dot:hover { opacity: 1; transform: scale(1.08); }
+
+        /* ── Game Screen ── */
+        .game-header {
+            background: var(--white); padding: 1rem 2.5rem;
+            display: flex; justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray-pale);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .game-header .location-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem; font-weight: 600;
+            color: var(--sage-dark);
+        }
+        .game-header .round-badge {
+            background: var(--sage-pale); color: var(--sage-dark);
+            padding: 6px 18px; border-radius: 20px;
+            font-size: 0.82rem; font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .tries-container {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .tries-label {
+            font-size: 0.8rem; color: var(--gray); font-weight: 400;
+        }
+        .tries-circles {
+            display: flex; gap: 5px;
+        }
+        .try-circle {
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid var(--sage-light);
+            background: var(--sage-light);
+            transition: all 0.4s ease;
+        }
+        .try-circle.lost {
+            background: transparent;
+            border-color: var(--gray-light);
+        }
+
+        .game-body {
+            flex: 1; padding: 2rem;
+            max-width: 1200px; margin: 0 auto; width: 100%;
+        }
+        .images-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem; margin-bottom: 1.25rem;
+        }
+        .image-card {
+            background: var(--white);
+            border-radius: 20px; overflow: hidden;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+            border: 1px solid var(--gray-pale);
+            transition: box-shadow 0.3s ease;
+        }
+        .image-card:hover {
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+        }
+        .image-card .label {
+            padding: 10px 18px; font-size: 0.75rem;
+            font-weight: 500; text-transform: uppercase;
+            letter-spacing: 2px; color: var(--gray);
+            background: var(--cream);
+        }
+        .image-wrap {
+            position: relative;
+            width: 100%; height: 420px;
+        }
+        .image-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover; display: block;
+        }
+        /* Portrait mode for tall vertical photos (The Mills) */
+        .portrait-round .image-wrap {
+            height: auto;
+            min-height: 420px;
+        }
+        .portrait-round .image-wrap img {
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* Hotspots - invisible click targets */
+        .hotspot {
+            position: absolute;
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            background: transparent;
+            border: none; outline: none;
+        }
+        .hotspot[data-shape="rect"],
+        .hotspot[data-shape="poly"] {
+            transform: none;
+            border-radius: 0;
+        }
+        .hotspot.found, .hotspot.revealed {
+            pointer-events: none;
+            cursor: default;
+        }
+        /* Glowing green ring when found */
+        .hotspot .glow-ring {
+            position: absolute;
+            left: var(--glow-x, 50%);
+            top: var(--glow-y, 50%);
+            width: 36px; height: 36px;
+            margin-left: -18px; margin-top: -18px;
+            border-radius: 50%;
+            border: 2.5px solid var(--sage-light);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .hotspot.found .glow-ring {
+            opacity: 1;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+        /* Gold ring for revealed (missed) answers */
+        .hotspot.revealed .glow-ring {
+            opacity: 1;
+            border-color: var(--gold);
+            animation: glowPulseGold 2s ease-in-out infinite;
+        }
+        @keyframes glowPulseGold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(196, 163, 90, 0.35); }
+            50% { box-shadow: 0 0 0 18px rgba(196, 163, 90, 0); }
+        }
+        /* Expanding ring on find */
+        .hotspot .burst-ring {
+            position: absolute;
+            left: var(--glow-x, 50%);
+            top: var(--glow-y, 50%);
+            width: 36px; height: 36px;
+            margin-left: -18px; margin-top: -18px;
+            border-radius: 50%;
+            border: 2px solid var(--sage);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .hotspot.found .burst-ring {
+            animation: ringFade 0.8s ease forwards;
+        }
+        .hotspot.revealed .burst-ring {
+            border-color: var(--gold);
+            animation: ringFade 0.8s ease forwards;
+        }
+
+        .progress-wrap {
+            background: var(--white);
+            border-radius: 16px; padding: 1.1rem 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+            border: 1px solid var(--gray-pale);
+        }
+        .progress-bar {
+            width: 100%; height: 5px;
+            background: var(--gray-pale);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--sage-pale), var(--sage));
+            border-radius: 3px; transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .found-count {
+            text-align: center; margin-top: 0.7rem;
+            font-size: 0.85rem; color: var(--gray); font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+        .instruction-text {
+            text-align: center; color: var(--gray);
+            font-size: 0.88rem; margin-bottom: 1.2rem;
+            font-weight: 300;
+            letter-spacing: 0.2px;
+        }
+
+        /* ── Intro Screen ── */
+        .intro-screen {
+            flex: 1;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(160deg, var(--cream) 0%, #E8F0E9 50%, #DCE8DD 100%);
+            width: 100%;
+        }
+        .intro-card {
+            background: var(--white);
+            border-radius: 24px; padding: 3rem 2.5rem;
+            max-width: 600px; width: 100%;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+            border: 1px solid var(--gray-pale);
+            text-align: center;
+            animation: slideUp 0.6s ease;
+            margin: 0 auto;
+        }
+        .intro-card .round-complete-icon {
+            width: 52px; height: 52px;
+            margin: 0 auto 1.2rem;
+            background: var(--sage-pale);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .intro-card .round-complete-icon svg {
+            width: 24px; height: 24px;
+        }
+        .intro-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem; color: var(--sage-dark);
+            margin-bottom: 0.3rem;
+        }
+        .intro-card .round-label {
+            color: var(--sage); font-size: 0.9rem;
+            font-weight: 500; margin-bottom: 1.8rem;
+            letter-spacing: 0.3px;
+        }
+        .intro-card .intro-body {
+            color: var(--gray);
+            line-height: 1.8; font-size: 0.98rem;
+            margin-bottom: 1.5rem; text-align: left;
+            font-weight: 300;
+        }
+        .intro-card .fun-fact {
+            background: var(--cream);
+            border-left: 3px solid var(--gold);
+            padding: 1rem 1.25rem;
+            border-radius: 0 12px 12px 0;
+            text-align: left; margin-bottom: 2rem;
+            font-size: 0.92rem; color: var(--charcoal);
+            line-height: 1.65;
+        }
+        .intro-card .fun-fact strong {
+            color: var(--sage-dark); font-weight: 500;
+        }
+        .intro-card .out-of-tries {
+            background: var(--error-light);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--error);
+        }
+        .intro-actions {
+            display: flex; gap: 12px;
+            justify-content: center; flex-wrap: wrap;
+        }
+
+        /* ── Victory Screen ── */
+        .victory-screen {
+            flex: 1;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(160deg, var(--cream) 0%, #E8F0E9 50%, #DCE8DD 100%);
+            width: 100%;
+        }
+        .victory-card {
+            background: var(--white);
+            border-radius: 24px; padding: 3rem;
+            max-width: 480px; width: 100%;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+            border: 1px solid var(--gray-pale);
+            text-align: center;
+            animation: slideUp 0.6s ease;
+            margin: 0 auto;
+        }
+        .victory-card .victory-icon {
+            width: 64px; height: 64px;
+            margin: 0 auto 1.2rem;
+            background: var(--sage-pale);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .victory-card .victory-icon svg {
+            width: 30px; height: 30px;
+        }
+        .victory-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem; color: var(--sage-dark);
+            margin-bottom: 0.8rem;
+        }
+        .victory-card p {
+            color: var(--gray);
+            font-size: 1rem; line-height: 1.7;
+            margin-bottom: 1.8rem;
+            font-weight: 300;
+        }
+        .score-display {
+            background: var(--cream);
+            border-radius: 16px; padding: 1.5rem;
+            margin-bottom: 1.8rem;
+        }
+        .score-display .score-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem; color: var(--sage);
+            font-weight: 700;
+        }
+        .score-display .score-label {
+            color: var(--gray); font-size: 0.85rem;
+            font-weight: 400; letter-spacing: 0.3px;
+        }
+        .star-row {
+            display: flex; justify-content: center;
+            gap: 10px; margin: 1.2rem 0;
+        }
+        .star-shape {
+            width: 28px; height: 28px;
+            opacity: 0.15;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .star-shape.earned {
+            opacity: 1;
+            animation: popIn 0.6s ease forwards;
+        }
+        .star-shape svg {
+            width: 100%; height: 100%;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; top: 80px; left: 50%;
+            transform: translateX(-50%) translateY(-16px);
+            padding: 12px 28px; border-radius: 50px;
+            font-size: 0.92rem; font-weight: 400;
+            opacity: 0; pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 200;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 8px;
+            letter-spacing: 0.2px;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success { background: var(--sage); color: white; }
+        .toast.error { background: var(--error); color: white; }
+        .toast .toast-icon {
+            width: 15px; height: 15px; flex-shrink: 0;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .images-row { grid-template-columns: 1fr; }
+            .title-content h1 { font-size: 2.4rem; }
+            .intro-card, .victory-card { padding: 2rem; }
+            .game-header { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 8px; }
+            .game-body { padding: 1rem; }
+            .image-wrap { height: 320px; }
+            .portrait-round .image-wrap { min-height: 320px; }
+        }
+        @media (max-width: 500px) {
+            .title-content h1 { font-size: 2rem; }
+            .image-wrap { height: 260px; }
+            .portrait-round .image-wrap { min-height: 260px; }
+            .hotspot[data-shape="circle"] { width: 64px; height: 64px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TITLE SCREEN -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="screen active" id="screen-title">
+        <div class="title-screen">
+            <div class="title-content">
+                <h1>Hidden Details</h1>
+                <p class="subtitle">A Hong Kong Heritage Discovery Game</p>
+                <p class="desc">Explore iconic Hong Kong landmarks through a playful lens. Compare two photographs of each location &mdash; one original, one subtly altered. Can you spot all the hidden changes?</p>
+                <button class="btn btn-primary" onclick="game.start()">Start Exploring</button>
+                <div class="location-dots">
+                    <div class="loc-dot"><img src="images/bluehouse-original.jpg" alt="Blue House"></div>
+                    <div class="loc-dot"><img src="images/hku-original.jpg" alt="HKU"></div>
+                    <div class="loc-dot"><img src="images/gagestreet-original.jpg" alt="Gage Street"></div>
+                    <div class="loc-dot"><img src="images/taikwun-original.jpg" alt="Tai Kwun"></div>
+                    <div class="loc-dot"><img src="images/mawan-original.jpeg" alt="Ma Wan"></div>
+                    <div class="loc-dot"><img src="images/taimeituk-original.jpeg" alt="Tai Mei Tuk"></div>
+                    <div class="loc-dot"><img src="images/shataukok-original.jpeg" alt="Sha Tau Kok"></div>
+                    <div class="loc-dot"><img src="images/themills-original.jpeg" alt="The Mills"></div>
+                    <div class="loc-dot"><img src="images/avenueofstars-original.jpg" alt="Avenue of Stars"></div>
+                    <div class="loc-dot"><img src="images/clocktower-original.jpg" alt="Clock Tower"></div>
+                    <div class="loc-dot"><img src="images/kaitak-original.jpg" alt="Kai Tak"></div>
+                    <div class="loc-dot"><img src="images/ladiesstreet-original.jpg" alt="Ladies Street"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- GAME SCREEN -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-game">
+        <div class="game-header">
+            <div class="location-name" id="game-location">Location</div>
+            <div class="round-badge" id="game-round">Round 1 / 8</div>
+            <div class="tries-container">
+                <span class="tries-label">Tries left</span>
+                <div class="tries-circles" id="tries-circles">
+                    <div class="try-circle"></div>
+                    <div class="try-circle"></div>
+                    <div class="try-circle"></div>
+                    <div class="try-circle"></div>
+                    <div class="try-circle"></div>
+                </div>
+            </div>
+        </div>
+        <div class="game-body">
+            <p class="instruction-text">Click directly on the <strong>edited photo</strong> where you spot a difference</p>
+            <div class="images-row">
+                <div class="image-card">
+                    <div class="label">Original</div>
+                    <div class="image-wrap">
+                        <img id="img-original" src="" alt="Original">
+                    </div>
+                </div>
+                <div class="image-card">
+                    <div class="label">Edited</div>
+                    <div class="image-wrap" id="edited-wrap">
+                        <img id="img-edited" src="" alt="Edited">
+                    </div>
+                </div>
+            </div>
+            <div class="progress-wrap">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="found-count" id="found-count">0 / 4 found</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- ROUND INTRO SCREEN (shown AFTER round) -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-intro">
+        <div class="intro-screen">
+            <div class="intro-card">
+                <div class="round-complete-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <h2 id="intro-title">Location Name</h2>
+                <p class="round-label" id="intro-round-label">Round 1 Complete</p>
+                <p class="intro-body" id="intro-text">Description goes here...</p>
+                <div class="fun-fact" id="intro-funfact">
+                    <strong>Did you know?</strong> <span id="intro-fact">Fun fact goes here...</span>
+                </div>
+                <div class="out-of-tries" id="out-of-tries" style="display:none;">
+                    You ran out of tries, but here is the story behind this place.
+                </div>
+                <div class="intro-actions">
+                    <button class="btn btn-primary" id="intro-btn" onclick="game.nextRound()">Continue</button>
+                    <button class="btn btn-ghost" id="intro-retry-btn" style="display:none;" onclick="game.retryRound()">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- VICTORY SCREEN -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-victory">
+        <div class="victory-screen">
+            <div class="victory-card">
+                <div class="victory-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#6B8F71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </div>
+                <h2>Congratulations</h2>
+                <p>You've explored all twelve iconic Hong Kong locations and discovered every hidden detail.</p>
+                <div class="star-row" id="victory-stars">
+                    <div class="star-shape">
+                        <svg viewBox="0 0 24 24" fill="#C4A35A"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <div class="star-shape">
+                        <svg viewBox="0 0 24 24" fill="#C4A35A"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <div class="star-shape">
+                        <svg viewBox="0 0 24 24" fill="#C4A35A"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                </div>
+                <div class="score-display">
+                    <div class="score-number" id="victory-score">16</div>
+                    <div class="score-label">differences found</div>
+                </div>
+                <button class="btn btn-primary" onclick="game.restart()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════════════════
+    // GAME DATA
+    // ═══════════════════════════════════════════════════════════
+    const LOCATIONS = [
+        {
+            id: 'bluehouse',
+            name: 'Blue House',
+            district: 'Wan Chai, Hong Kong Island',
+            original: 'images/bluehouse-original.jpg',
+            edited: 'images/bluehouse-edited.jpg',
+            intro: 'The Blue House is a cluster of historic tenement buildings located in Wan Chai. Built in the 1920s, it is famous for its vibrant bright blue facade; reportedly painted because the waterworks department only had blue paint left at the time.',
+            funFact: 'Today, it stands as a rare Grade I historic building and a successful example of community-led heritage conservation in Hong Kong, blending traditional architectural features with early 20th-century urban housing.',
+            differences: [
+                { desc: 'A traditional Chinese red lantern was added hanging from the blue metal railing on the upper-right balcony.', x: 84, y: 8 },
+                { desc: 'Patches of green plants and vines were added growing out of the cracks in the white exterior wall just below the balcony on the right.', x: 74, y: 35 },
+                { desc: 'A golden bat emblem has been added to the top face of the corbel, whereas the original shows a plain dark square panel.', x: 41, y: 81 },
+                { desc: 'The colourful stained glass window panels on the upper-left floor were modified to feature more detailed pictorial patterns.', shape: 'poly', points: [[27, 10], [26, 34], [48, 23], [48, 1]] }
+            ]
+        },
+        {
+            id: 'hku',
+            name: 'HKU Main Building',
+            district: 'Pok Fu Lam, Hong Kong Island',
+            original: 'images/hku-original.jpg',
+            edited: 'images/hku-edited.jpg',
+            intro: 'The Main Building of the University of Hong Kong is the university\'s oldest and most iconic structure, completed in 1912. Designed in the magnificent Edwardian Baroque architectural style, it features striking red brickwork, imposing granite colonnades, and symmetrical corner towers capped with a prominent central clock tower.',
+            funFact: 'As a declared monument in Hong Kong, it has served as the historic academic heart of the institution for over a century, welcoming generations of scholars and leaders.',
+            differences: [
+                { desc: 'A classic British-style red telephone booth has been added to the lower-right section of the brick plaza pavement.', x: 93, y: 82 },
+                { desc: 'One of the upper-floor windows on the left wing of the main facade has been changed to feature a decorative white latticework pattern.', x: 34, y: 65 },
+                { desc: 'Several of the dark mechanical/ventilation units positioned along the flat black roof areas (upper-left wing) have been removed.', x: 23, y: 54 },
+                { desc: 'A pair of new square ventilation grilles/vents have been added onto the white exterior wall surface just below the upper walkway roof on the right wing.', x: 59, y: 52 }
+            ]
+        },
+        {
+            id: 'gagestreet',
+            name: 'Gage Street',
+            district: 'Central, Hong Kong Island',
+            original: 'images/gagestreet-original.jpg',
+            edited: 'images/gagestreet-edited.jpg',
+            intro: 'Located on Gage Street in Central, Hong Kong, Lan Fong Yuen is one of the city\'s most legendary and oldest dai pai dong (open-air food stalls). Established in 1952, it is universally credited as the birthplace of Hong Kong-style "silk stocking" milk tea and crispy buns with condensed milk and butter.',
+            funFact: 'Tucked amid the bustling sloping streets and vibrant market atmosphere of Central, it remains a beloved culinary landmark representing traditional local cha chaan teng culture.',
+            differences: [
+                { desc: 'The top storage crates stacked on the left side of the street have been changed from red to bright yellow.', x: 17, y: 73 },
+                { desc: 'The patterned tote bag carried by the woman standing in the centre has been replaced with a solid brown leather handbag.', x: 43, y: 68 },
+                { desc: 'A second, larger umbrella featuring red, white, and blue panels has been added right next to the existing blue umbrella.', x: 85, y: 35 },
+                { desc: 'The graphic design/logo on the back of the white t-shirt worn by the man walking away on the right side has been altered.', x: 92, y: 58 }
+            ]
+        },
+        {
+            id: 'taikwun',
+            name: 'Tai Kwun',
+            district: 'Central, Hong Kong Island',
+            original: 'images/taikwun-original.jpg',
+            edited: 'images/taikwun-edited.jpg',
+            intro: 'Tai Kwun is a historic compound of former colonial buildings comprising the Central Police Station, Central Magistracy, and Victoria Prison, located in the heart of Central, Hong Kong. Built starting in the mid-19th century, this sprawling site is one of the city\'s most significant architectural and historical landmarks.',
+            funFact: 'Following a massive heritage conservation and revitalization project, it reopened as a vibrant centre for contemporary art, heritage exhibitions, and cultural performances, seamlessly contrasting its Victorian-era brick architecture with ultra-modern skyscrapers towering in the background.',
+            differences: [
+                { desc: 'The large central rectangular window on the upper floor of the front facade has been replaced with colourful stained glass featuring a floral pattern.', x: 50, y: 62 },
+                { desc: 'A row of dark solar panels has been installed on the tiled roof section on the right side of the building.', x: 80, y: 48 },
+                { desc: 'The decorative white circular ring/sculpture mounted on the left pillar of the main entrance has been filled in to look like a solid white disc.', x: 40, y: 78 },
+                { desc: 'The glowing globe light fixture on the right-hand pillar of the central entrance structure has been removed.', x: 62, y: 78 }
+            ]
+        },
+        {
+            id: 'taimeituk',
+            name: 'Tai Mei Tuk',
+            district: 'Tai Po, New Territories',
+            original: 'images/taimeituk-original.jpeg',
+            edited: 'images/taimeituk-edited.jpg',
+            intro: 'Tai Mei Tuk is a scenic outdoor recreation area in Tai Po District, Hong Kong, located beside Plover Cove Reservoir at the foot of the Pat Sin Leng mountain range. Its name means "the very end" in Cantonese, reflecting its position at the end of the reservoir dam.',
+            funFact: 'It is a popular weekend destination for cycling, hiking, kite flying, barbecues, and water sports such as kayaking, sailing, and windsurfing. The nearby 2 km Plover Cove Dam offers flat, picturesque routes for walkers and cyclists.',
+            differences: [
+                { desc: 'A small flock of birds has been added in the upper-left sky.', x: 18, y: 15 },
+                { desc: 'The shape of the mountain peak in the background has been changed.', x: 53, y: 15 },
+                { desc: 'More green plants and denser vegetation have appeared along the left side of the dam.', x: 39, y: 71 },
+                { desc: 'All dashed white centre lines on the road have been removed.', x: 36, y: 42 }
+            ]
+        },
+        {
+            id: 'mawan',
+            name: 'Ma Wan 1868',
+            district: 'Tsuen Wan, New Territories',
+            original: 'images/mawan-original.jpeg',
+            edited: 'images/mawan-edited.jpg',
+            intro: 'Ma Wan 1868 is a heritage-and-arts destination on Ma Wan Island, Hong Kong, opened to the public in March 2025. Its name commemorates 1868, when Qing-era customs stations were established at Kap Shui Mun on Ma Wan, reflecting the island\'s historic role in the Maritime Silk Road.',
+            funFact: 'The nearly 500,000 sq ft site revitalises the former Ma Wan Village into a colourful cultural village. Visitors can explore murals and restored village houses, join art and craft workshops, visit a farm and pet garden, enjoy dining, or take part in outdoor activities such as glamping and water sports.',
+            differences: [
+                { desc: 'The logo on the blue building has been changed to a star shape.', x: 65, y: 58 },
+                { desc: 'An air conditioner has been added on the pastel orange building wall.', x: 58, y: 52 },
+                { desc: 'The colour of the paved ground in the foreground has been changed to brown.', x: 68, y: 98 },
+                { desc: 'One prominent tree cluster behind the buildings now has bright autumn orange leaves.', x: 72, y: 18 }
+            ]
+        },
+        {
+            id: 'shataukok',
+            name: 'Sha Tau Kok',
+            district: 'North District, New Territories',
+            original: 'images/shataukok-original.jpeg',
+            edited: 'images/shataukok-edited.jpg',
+            intro: 'Sha Tau Kok is a historic coastal town in Hong Kong\'s North District, on the northeastern border with Shenzhen. It was designated part of the Frontier Closed Area in 1951 and has been gradually opening to visitors since 2022, making it a distinctive destination for heritage and border-town experiences.',
+            funFact: 'The town is known for its 280-metre Sha Tau Kok Pier, the longest in Hong Kong, and the traditional fish lantern dance, which has more than 300 years of history and is listed as national intangible cultural heritage.',
+            differences: [
+                { desc: 'The colour of the heart symbol on the welcome sign has been changed from pink to yellow.', x: 58, y: 58 },
+                { desc: 'A window has been added to the exterior wall of the pink building on the left.', x: 20, y: 28 },
+                { desc: 'A small reflective puddle of water has been added on the pavement in front of the sign.', x: 24, y: 92 },
+                { desc: 'The curved cylindrical roof tiles on the sign structure have been changed to flat rectangular tiles.', shape: 'rect', x1: 32, y1: 47, x2: 81, y2: 49 }
+            ]
+        },
+        {
+            id: 'themills',
+            name: 'The Mills',
+            district: 'Tsuen Wan, New Territories',
+            original: 'images/themills-original.jpeg',
+            edited: 'images/themills-edited.jpg',
+            intro: 'The Mills is a heritage revitalisation destination in Tsuen Wan, Hong Kong, created by transforming the former Nan Fung Textiles cotton-spinning mills into a hub for culture, innovation, retail, and learning. The original factory operated from 1954 to 2008, and the revitalised complex opened in 2018.',
+            funFact: 'It has three main pillars: The Mills Fabrica for techstyle startups, The Mills Shopfloor for experiential retail and dining, and CHAT (Centre for Heritage, Arts and Textile), a non-profit arts institution with exhibitions on textile heritage.',
+            differences: [
+                { desc: 'A large industrial-style pendant light has been added hanging down from the glass ceiling on the far right side.', x: 92, y: 45 },
+                { desc: 'A small child has been added running in the open floor space near the bottom center, between the green and blue seats.', x: 53, y: 85 },
+                { desc: 'The solid blue circular seat on the left side (middle area) has been changed to yellow.', x: 30, y: 79 },
+                { desc: 'On the bottom pink banners, the figure on the far right has been changed from a walking person into a sitting figure.', x: 66, y: 29 }
+            ]
+        },
+        {
+            id: 'avenueofstars',
+            name: 'Avenue of Stars',
+            district: 'Tsim Sha Tsui, Kowloon',
+            original: 'images/avenueofstars-original.jpg',
+            edited: 'images/avenueofstars-edited.jpeg',
+            intro: 'The Avenue of Stars on the Tsim Sha Tsui Promenade is one of Hong Kong\'s most iconic waterfront spots. Stretching along Victoria Harbour, it offers one of the best nighttime views of the glittering Hong Kong Island skyline.',
+            funFact: 'The bronze statue in the foreground is the Hong Kong Film Awards goddess, a tribute to the city\'s legendary movie industry. Nearby you\'ll also find handprints of stars like Bruce Lee, Jackie Chan and Anita Mui.',
+            differences: [
+                { desc: 'A crescent moon was added to the top right sky.', x: 85, y: 12 },
+                { desc: 'A boat/ferry was added to the water in the middle of the harbor.', x: 52, y: 72 },
+                { desc: 'The glowing sphere held by the statue was changed from warm yellow to bright blue.', x: 43, y: 22 },
+                { desc: 'The red glowing lights on the base of the statue were removed.', x: 36, y: 88 }
+            ]
+        },
+        {
+            id: 'clocktower',
+            name: 'Clock Tower & Cultural Centre',
+            district: 'Tsim Sha Tsui, Kowloon',
+            original: 'images/clocktower-original.jpg',
+            edited: 'images/clocktower-edited.jpg',
+            intro: 'The historic Clock Tower and Hong Kong Cultural Centre on the Tsim Sha Tsui waterfront. The 44-metre red-brick Clock Tower (built in 1915) is a Declared Monument and one of the last remaining parts of the old Kowloon-Canton Railway terminus.',
+            funFact: 'Right beside it stands the distinctive angular Cultural Centre, a major venue for concerts, ballet, opera and theatre, with excellent harbour views across to Hong Kong Island.',
+            differences: [
+                { desc: 'A white bird was added to the sky to the right of the tall skyscraper.', x: 62, y: 25 },
+                { desc: 'A red flag was added to the flagpole among the palm trees.', x: 56, y: 62 },
+                { desc: 'The small boat on the water in the background on the right side was removed.', x: 95, y: 58 },
+                { desc: 'One of the palm trees in the center row behind the white waterfront structure was removed.', x: 48, y: 65 }
+            ]
+        },
+        {
+            id: 'kaitak',
+            name: 'Kai Tak Sports Park',
+            district: 'Kowloon City, Kowloon',
+            original: 'images/kaitak-original.jpg',
+            edited: 'images/kaitak-edited.jpeg',
+            intro: 'Kai Tak Sports Park is Hong Kong\'s newest major sports and entertainment venue built on the site of the former Kai Tak Airport. The striking multi-purpose stadium features a distinctive curved, colour-shifting roof with solar panels.',
+            funFact: 'It can host large-scale concerts, football matches and international events, and forms the centrepiece of the ongoing redevelopment of the old airport area in Kowloon.',
+            differences: [
+                { desc: 'One of the large curved light-grey roof panels on the right side was changed to dark charcoal/black.', x: 62, y: 55 },
+                { desc: 'A distinct fluffy white cloud was removed from the right side of the sky above the tall black skyscraper.', x: 43, y: 15 },
+                { desc: 'The prominent green-facade building on the far left midground was changed to light blue/grey.', x: 18, y: 42 }
+            ]
+        },
+        {
+            id: 'ladiesstreet',
+            name: "Ladies' Street",
+            district: 'Mong Kok, Kowloon',
+            original: 'images/ladiesstreet-original.jpg',
+            edited: 'images/ladiesstreet-edited.jpeg',
+            intro: "Ladies' Street (officially part of Tung Choi Street) is Hong Kong's most famous open-air market, located in the busy Mong Kok district. It earned its name because it originally focused on selling affordable women's clothing and accessories.",
+            funFact: 'Today it remains a lively spot for bargain hunting, street food, and experiencing local market culture.',
+            differences: [
+                { desc: 'Two bright red Chinese lanterns were added hanging under the dark awning on the right side.', x: 92, y: 62 },
+                { desc: 'The large purple umbrellas in the bottom corners were changed to bright neon green.', x: 15, y: 88 },
+                { desc: 'A bright red bicycle was added parked next to the green-roofed stall in the bottom right.', x: 85, y: 78 },
+                { desc: 'The middle character on the large horizontal banner was changed.', x: 42, y: 38 }
+            ]
+        }
+    ];
+
+    const TOAST_CHECK = `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    const TOAST_X = `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
+    // ═══════════════════════════════════════════════════════════
+    // GAME ENGINE
+    // ═══════════════════════════════════════════════════════════
+    const game = {
+        currentRound: 0,
+        maxTries: 5,
+        triesLeft: 5,
+        foundThisRound: [],
+        totalFound: 0,
+        outOfTries: false,
+
+        showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const el = document.getElementById(id);
+            el.classList.add('active');
+            // Trigger reflow for transition
+            void el.offsetWidth;
+        },
+
+        start() {
+            this.currentRound = 0;
+            this.totalFound = 0;
+            this.outOfTries = false;
+            this.beginRound();
+        },
+
+        beginRound() {
+            this.triesLeft = this.maxTries;
+            this.foundThisRound = [];
+            this.outOfTries = false;
+            this.setupRoundUI();
+            this.showScreen('screen-game');
+        },
+
+        pointInPolygon(x, y, points) {
+            let inside = false;
+            for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+                const xi = points[i][0], yi = points[i][1];
+                const xj = points[j][0], yj = points[j][1];
+                const intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        },
+
+        setupRoundUI() {
+            const loc = LOCATIONS[this.currentRound];
+            document.getElementById('game-location').textContent = loc.name;
+            document.getElementById('game-round').textContent = `Round ${this.currentRound + 1} / ${LOCATIONS.length}`;
+            document.getElementById('img-original').src = loc.original;
+            document.getElementById('img-edited').src = loc.edited;
+
+            // Toggle portrait mode for vertical photos
+            document.querySelector('.game-body').classList.toggle('portrait-round', loc.id === 'themills' || loc.id === 'hku');
+
+            const wrap = document.getElementById('edited-wrap');
+            wrap.querySelectorAll('.hotspot').forEach(h => h.remove());
+
+            loc.differences.forEach((diff, idx) => {
+                const hs = document.createElement('div');
+                hs.className = 'hotspot';
+                hs.dataset.index = idx;
+                hs.innerHTML = `<div class="burst-ring"></div><div class="glow-ring"></div>`;
+
+                if (diff.shape === 'rect' || diff.shape === 'poly') {
+                    const points = diff.shape === 'rect'
+                        ? [[diff.x1, diff.y1], [diff.x2, diff.y1], [diff.x2, diff.y2], [diff.x1, diff.y2]]
+                        : diff.points;
+                    const xs = points.map(p => p[0]);
+                    const ys = points.map(p => p[1]);
+                    const minX = Math.min(...xs), maxX = Math.max(...xs);
+                    const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+                    hs.style.left = minX + '%';
+                    hs.style.top = minY + '%';
+                    hs.style.width = (maxX - minX) + '%';
+                    hs.style.height = (maxY - minY) + '%';
+                    hs.dataset.shape = diff.shape;
+
+                    const cX = xs.reduce((a, b) => a + b, 0) / xs.length;
+                    const cY = ys.reduce((a, b) => a + b, 0) / ys.length;
+                    hs.style.setProperty('--glow-x', (((cX - minX) / (maxX - minX)) * 100) + '%');
+                    hs.style.setProperty('--glow-y', (((cY - minY) / (maxY - minY)) * 100) + '%');
+
+                    hs.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const rect = wrap.getBoundingClientRect();
+                        const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+                        const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+
+                        if (diff.shape === 'poly') {
+                            if (!this.pointInPolygon(clickX, clickY, diff.points)) {
+                                this.onWrongClick(wrap);
+                                return;
+                            }
+                        } else if (diff.shape === 'rect') {
+                            if (clickX < diff.x1 || clickX > diff.x2 || clickY < diff.y1 || clickY > diff.y2) {
+                                this.onWrongClick(wrap);
+                                return;
+                            }
+                        }
+                        this.onHotspotClick(idx, hs);
+                    });
+                } else {
+                    hs.style.left = diff.x + '%';
+                    hs.style.top = diff.y + '%';
+                    const size = diff.size || 80;
+                    hs.style.width = size + 'px';
+                    hs.style.height = size + 'px';
+                    hs.dataset.shape = 'circle';
+
+                    hs.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.onHotspotClick(idx, hs);
+                    });
+                }
+
+                wrap.appendChild(hs);
+            });
+
+            wrap.onclick = (e) => {
+                if (e.target === wrap || e.target.tagName === 'IMG') {
+                    this.onWrongClick(wrap);
+                }
+            };
+
+            this.updateTries();
+            this.updateProgress();
+        },
+
+        onHotspotClick(index, element) {
+            if (this.foundThisRound.includes(index)) return;
+
+            this.foundThisRound.push(index);
+            this.totalFound++;
+            element.classList.add('found');
+
+            const loc = LOCATIONS[this.currentRound];
+            const diff = loc.differences[index];
+            this.showToast(TOAST_CHECK + ' Found: ' + diff.desc, 'success');
+            this.updateProgress();
+
+            if (this.foundThisRound.length === loc.differences.length) {
+                setTimeout(() => this.roundComplete(), 1600);
+            }
+        },
+
+        onWrongClick(element) {
+            this.triesLeft--;
+            this.updateTries();
+            this.showToast(TOAST_X + ' Not a difference &mdash; try again', 'error');
+
+            element.classList.add('shake');
+            setTimeout(() => element.classList.remove('shake'), 400);
+
+            if (this.triesLeft <= 0) {
+                this.outOfTries = true;
+                // Reveal all unfound hotspots with gold rings
+                const wrap = document.getElementById('edited-wrap');
+                wrap.querySelectorAll('.hotspot').forEach(hs => {
+                    const idx = parseInt(hs.dataset.index);
+                    if (!this.foundThisRound.includes(idx)) {
+                        hs.classList.add('revealed');
+                    }
+                });
+                this.showToast('Out of tries! Here are the answers you missed', 'error');
+                setTimeout(() => this.roundComplete(), 2500);
+            }
+        },
+
+        updateTries() {
+            const circles = document.querySelectorAll('.try-circle');
+            circles.forEach((c, i) => {
+                c.classList.toggle('lost', i >= this.triesLeft);
+            });
+        },
+
+        updateProgress() {
+            const loc = LOCATIONS[this.currentRound];
+            const pct = (this.foundThisRound.length / loc.differences.length) * 100;
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('found-count').textContent = `${this.foundThisRound.length} / ${loc.differences.length} found`;
+        },
+
+        roundComplete() {
+            const loc = LOCATIONS[this.currentRound];
+            document.getElementById('intro-title').textContent = loc.name;
+
+            if (this.outOfTries) {
+                document.getElementById('intro-round-label').textContent = `Round ${this.currentRound + 1} of ${LOCATIONS.length}`;
+            } else {
+                document.getElementById('intro-round-label').textContent = `Round ${this.currentRound + 1} of ${LOCATIONS.length} Complete`;
+            }
+
+            document.getElementById('intro-text').textContent = loc.intro;
+            document.getElementById('intro-fact').textContent = loc.funFact;
+
+            // Show/hide out-of-tries message
+            const oot = document.getElementById('out-of-tries');
+            if (this.outOfTries) {
+                oot.style.display = 'block';
+            } else {
+                oot.style.display = 'none';
+            }
+
+            // Configure buttons
+            const btn = document.getElementById('intro-btn');
+            const retryBtn = document.getElementById('intro-retry-btn');
+
+            if (this.outOfTries) {
+                btn.textContent = 'Continue to Next';
+                btn.onclick = () => this.nextRound();
+                retryBtn.style.display = 'inline-block';
+            } else if (this.currentRound === LOCATIONS.length - 1) {
+                btn.textContent = 'See Final Results';
+                btn.onclick = () => this.victory();
+                retryBtn.style.display = 'none';
+            } else {
+                btn.textContent = `Next: ${LOCATIONS[this.currentRound + 1].name}`;
+                btn.onclick = () => this.nextRound();
+                retryBtn.style.display = 'none';
+            }
+
+            this.showScreen('screen-intro');
+        },
+
+        nextRound() {
+            this.currentRound++;
+            if (this.currentRound >= LOCATIONS.length) {
+                this.victory();
+            } else {
+                this.beginRound();
+            }
+        },
+
+        retryRound() {
+            // Reset just this round and try again
+            this.totalFound -= this.foundThisRound.length;
+            this.beginRound();
+        },
+
+        victory() {
+            document.getElementById('victory-score').textContent = this.totalFound;
+            const stars = document.querySelectorAll('#victory-stars .star-shape');
+            stars.forEach((s, i) => {
+                s.classList.remove('earned');
+                setTimeout(() => s.classList.add('earned'), i * 300);
+            });
+            this.showScreen('screen-victory');
+        },
+
+        restart() {
+            this.currentRound = 0;
+            this.totalFound = 0;
+            this.outOfTries = false;
+            this.showScreen('screen-title');
+        },
+
+        showToast(html, type) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = html;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+    };
+    </script>
+</body>
+</html>
